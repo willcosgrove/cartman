@@ -1,5 +1,8 @@
 require "cartman/version"
+require "cartman/configuration"
 
 module Cartman
-  # Your code goes here...
+  def config(&block)
+    Configuration.new(&block)
+  end
 end
