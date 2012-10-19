@@ -1,9 +1,15 @@
 require "cartman/version"
 require "cartman/configuration"
+require "cartman/cart"
+require 'redis'
 
 module Cartman
   module_function
   def config(&block)
-    Configuration.new(&block)
+    if block_given?
+      @config = Configuration.new(&block)
+    else
+      @config
+    end
   end
 end

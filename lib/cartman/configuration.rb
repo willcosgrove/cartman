@@ -16,7 +16,7 @@ module Cartman
     class << self
       def method_missing(method, *args, &block)
         if !args.empty?
-          @@configuration.store(method, *args)
+          @@configuration.store(method, args[0])
         else
           @@configuration.fetch(method)
         end
