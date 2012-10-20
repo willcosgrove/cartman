@@ -13,8 +13,10 @@ module Cartman
       @@redis.sadd key, line_item_id
       keys_to_expire = line_item_keys
       keys_to_expire << key
-      keys_to_expire.each do |item|
-        @@redis.expire item, Cartman::Configuration.cart_expires_in
+      @@redis.pipelined do
+        keys_to_expire.each do |item|
+          @@redis.expire item, Cartman::Configuration.cart_expires_in
+        end
       end
     end
 
