@@ -1,6 +1,11 @@
 module Cartman
   class Configuration
-    @@configuration = {}
+    @@configuration = {
+      cart_expires_in: 604800, # one week
+      return_items_as: :openstruct, # vs a :hash
+      cost_field: :cost, # for cart totaling
+    }
+
     def initialize(&block)
       instance_eval &block
     end
