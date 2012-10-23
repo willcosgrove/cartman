@@ -1,13 +1,15 @@
+require 'redis'
+
 module Cartman
   class Configuration
     @@configuration = {
       cart_expires_in: 604800, # one week
-      return_items_as: :openstruct, # vs a :hash
       cost_field: :cost, # for cart totaling
+      redis: Redis.new, # Redis connection
     }
 
     def initialize(&block)
-      instance_eval &block
+      instance_eval &block if block_given?
     end
 
     def method_missing(method, *args, &block)

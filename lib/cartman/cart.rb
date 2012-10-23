@@ -18,23 +18,22 @@ module Cartman
           @@redis.expire item, Cartman::Configuration.cart_expires_in
         end
       end
+      get_item(line_item_id)
     end
 
-    def items(return_as=Cartman::Configuration.return_items_as)
-      items = line_item_keys.collect { |item_key|
-        @@redis.hgetall(item_key).inject({}){|memo,(k,v)| memo[k.to_sym] = v; memo} # symbolize keys
+    def remove_item(item)
+      @@redis.del "cartman:line_item:#{item._id}"
+      @@redis.srem key, item._id
+    end
+
+    def items
+      items = line_item_ids.collect { |item_id|
+        get_item(item_id)
       }
-      if return_as == :openstruct
-        items.collect { |item|
-          OpenStruct.new(item)
-        }
-      else
-        items
-      end
     end
 
     def total
-      items(:openstruct).collect { |item|
+      items.collect { |item|
         (item.send(Cartman::Configuration.cost_field).to_f * 100).to_i
       }.inject{|sum,cost| sum += cost} / 100.0
     end
@@ -55,6 +54,10 @@ module Cartman
 
     def line_item_keys
       line_item_ids.collect{ |id| "cartman:line_item:#{id}" }
+    end
+
+    def get_item(id)
+      Item.new(id, @uid, @@redis.hgetall("cartman:line_item:#{id}").inject({}){|memo,(k,v)| memo[k.to_sym] = v; memo})
     end
   end
 end
