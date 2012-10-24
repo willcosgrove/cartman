@@ -85,7 +85,7 @@ end
 ```
 
 ```haml
-# app/view/cart/show.html.haml
+-# app/view/cart/show.html.haml
 %h1 Cart - Total: #{@cart.total}
 %ul
   - @cart.items.each do |item|
