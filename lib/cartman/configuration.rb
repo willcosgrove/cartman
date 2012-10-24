@@ -5,6 +5,7 @@ module Cartman
     @@configuration = {
       cart_expires_in: 604800, # one week
       cost_field: :cost, # for cart totaling
+      quantity_field: :quantity, # for cart totaling
       redis: Redis.new, # Redis connection
     }
 

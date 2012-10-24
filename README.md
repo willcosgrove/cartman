@@ -47,6 +47,17 @@ The returned Items come back as `Cartman::Item` instances, which have a few spec
 - `_key` - which will return the redis key the data is stored in.  Probably won't need that, but it's there.
 - `#{attribute}=` - this is a setter defined for all of the items attributes that you gave it.  It will instantly save to redis also, so no need to call `save` (which is why there isn't a `save`).
 
+The `Cart` object also has some handy methods that you should be aware of:
+
+- `add_item(data)` - which is the life blood of Cartman.  This method takes a hash of data you would like to store with the item.  Here's a few suggestions of keys you may want in your hash:
+  - `:id` - to store the ID of the product you're adding
+  - `:type` - to store the class of the product you're adding.  Useful if you have multiple models that can go in the cart.
+  - `:cost` - which if you use will let you use the `Cart#total` method without any extra configuration
+  - `:quantity` - which if you use will let you use the `Cart#quantity` method without any extra configuration
+- `count` - which will give you the total number of items in the cart.  Faster than `cart.items.size` because it doesn't load all of the item data from redis.
+- `quantity` - which will return the total quantity of all the items.  The quantity field is set in the config block, by default it's :quantity
+- `remove_item(item) - which, you guessed it, removes an item.  This method takes an Item object, not a hash.
+
 Lets walk through an example implementation with a Rails app that has a User model and a Product model.
 
 ```ruby
@@ -58,7 +69,9 @@ class User < ActiveRecord::Base
   end
   #...
 end
+```
 
+```ruby
 # app/controllers/products_controller.rb
 class ProductsController < ApplicationController
   #...
@@ -69,7 +82,9 @@ class ProductsController < ApplicationController
   end
   #...
 end
+```
 
+```haml
 # app/view/cart/show.html.haml
 %h1 Cart - Total: #{@cart.total}
 %ul

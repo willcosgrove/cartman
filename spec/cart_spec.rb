@@ -61,6 +61,31 @@ describe Cartman do
       end
     end
 
+    describe "#count" do
+      it "should return the number of items in the cart" do
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
+        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)
+        cart.count.should eq(2)
+      end
+    end
+
+    describe "#quantity" do
+      it "should return the sum of the default quantity field" do
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
+        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)
+        cart.quantity.should eq(4)
+      end
+
+      it "should return the sum of the defined quantity field" do
+        Cartman.config do
+          quantity_field :qty
+        end
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, qty: 2)
+        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost: 184.24, qty: 2)
+        cart.quantity.should eq(4)
+      end
+    end
+
     describe "#total" do
       it "should total the default costs field" do
         cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)

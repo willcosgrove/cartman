@@ -32,6 +32,16 @@ module Cartman
       }
     end
 
+    def count
+      @@redis.scard key
+    end
+
+    def quantity
+      line_item_keys.collect { |item_key|
+        @@redis.hget item_key, Cartman::Configuration.quantity_field
+      }.inject(0){|sum,quantity| sum += quantity.to_i}
+    end
+
     def total
       items.collect { |item|
         (item.send(Cartman::Configuration.cost_field).to_f * 100).to_i
