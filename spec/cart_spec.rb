@@ -159,5 +159,29 @@ describe Cartman do
         cart.ttl.should eq(Cartman.config.cart_expires_in)
       end
     end
+
+    describe "#reassign" do
+      it "should only change the @uid if no key exists" do
+        cart.reassign(2)
+        cart.send(:key)[-1].should eq("2")
+      end
+
+      it "should rename the key, and index_key if it exists" do
+        cart.add_item(id: 17, name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
+        cart.reassign(2)
+        Cartman.config.redis.exists("cartman:cart:1").should be_false
+        Cartman.config.redis.exists("cartman:cart:1:index").should be_false
+        Cartman.config.redis.exists("cartman:cart:2").should be_true
+        Cartman.config.redis.exists("cartman:cart:2:index").should be_false
+        cart.send(:key)[-1].should eq("2")
+        cart.add_item(id: 18, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
+        cart.reassign(1)
+        Cartman.config.redis.exists("cartman:cart:2").should be_false
+        Cartman.config.redis.exists("cartman:cart:2:index").should be_false
+        Cartman.config.redis.exists("cartman:cart:1").should be_true
+        Cartman.config.redis.exists("cartman:cart:1:index").should be_true
+        cart.send(:key)[-1].should eq("1")
+      end
+    end
   end
 end

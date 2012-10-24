@@ -62,6 +62,7 @@ The `Cart` object also has some handy methods that you should be aware of:
 - `ttl` - will tell you how many seconds until the cart expires.  It will return -1 if the cart will never expire
 - `touch` - which will reset the ttl back to whatever expiration length is set in the config.  Touch is automatically called after `add_item` and `remove_item`
 - `destroy!` - which will delete the cart, and all the line_items out of it
+- `reassign(id)` - this method will reassign the cart's unique identifier.  So to access this cart at a later time after reassigning, you would put `Cart.new(reassigned_id)`.  This is useful for having a cart for an unsigned in user.  You can use their session ID while they're unauthenticated, and then when they sign in, you can reassign the cart to the user's ID.  NOTE: Reassigning will overwrite any cart in it's way.
 
 Lets walk through an example implementation with a Rails app that has a User model and a Product model.
 

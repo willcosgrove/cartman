@@ -80,14 +80,24 @@ module Cartman
       end
     end
 
-    private
-
-    def key
-      "cartman:cart:#{@uid}"
+    def reassign(new_id)
+      if @@redis.exists key
+        @@redis.rename key, key(new_id)
+      end
+      if @@redis.exists index_key
+        @@redis.rename index_key, index_key(new_id)
+      end
+      @uid = new_id
     end
 
-    def index_key
-      key + ":index"
+    private
+
+    def key(id=@uid)
+      "cartman:cart:#{id}"
+    end
+
+    def index_key(id=@uid)
+      key(id) + ":index"
     end
 
     def line_item_ids
