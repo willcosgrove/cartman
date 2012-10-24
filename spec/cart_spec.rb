@@ -32,6 +32,17 @@ describe Cartman do
         Cartman.config.redis.ttl("cartman:line_item:1").should eq(Cartman.config.cart_expires_in)
       end
 
+      it "should add an index key to be able to look up by type and ID" do
+        Cartman.config.redis.exists("cartman:cart:1:index").should be_true
+        Cartman.config.redis.sismember("cartman:cart:1:index", "Bottle:17").should be_true
+      end
+
+      it "should not add an index key if type and ID are not set" do
+        cart.add_item(id: 18, name: "Cordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
+        Cartman.config.redis.sismember("cartman:cart:1:index", "Bottle:18").should be_false
+        Cartman.config.redis.scard("cartman:cart:1:index").should eq(1)
+      end
+
       it "should return an Item" do
         item = cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)
         item.class.should eq(Cartman::Item)
@@ -58,6 +69,32 @@ describe Cartman do
         cart.items.first.class.should eq(Cartman::Item)
         cart.items.first.id.should eq("17")
         cart.items.first.name.should eq("Bordeux")
+      end
+    end
+
+    describe "#contains?(item)" do
+      before(:all) do
+        Bottle = Struct.new(:id)
+      end
+
+      before(:each) do
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
+        cart.add_item(id: 34, name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)
+      end
+
+      it "should be able to tell you that an item in the cart is present" do
+        cart.contains?(Bottle.new(17)).should be_true
+      end
+
+      it "should be able to tell you that an item in the cart is absent" do
+        cart.contains?(Bottle.new(20)).should be_false
+      end
+
+      it "should be able to tell you that an item in the cart is absent if it's been removed" do
+        cart.remove_item(cart.items.first)
+        cart.contains?(Bottle.new(17)).should be_false
+        cart.remove_item(cart.items.last)
+        cart.contains?(Bottle.new(34)).should be_false
       end
     end
 
@@ -100,6 +137,26 @@ describe Cartman do
         cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
         cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
         cart.total.should eq(36848)
+      end
+    end
+
+    describe "#destroy" do
+      it "should delete the line_item keys, the index key, and the cart key" do
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
+        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
+        cart.destroy!
+        Cartman.config.redis.exists("cartman:cart:1").should be_false
+        Cartman.config.redis.exists("cartman:line_item:1").should be_false
+        Cartman.config.redis.exists("cartman:line_item:2").should be_false
+        Cartman.config.redis.exists("cartman:cart:1:index").should be_false
+      end
+    end
+
+    describe "#touch" do
+      it "should reset the TTL" do
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
+        cart.touch
+        cart.ttl.should eq(Cartman.config.cart_expires_in)
       end
     end
   end

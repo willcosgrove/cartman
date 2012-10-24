@@ -3,7 +3,6 @@ require "cartman/configuration"
 require "cartman/cart"
 require "cartman/item"
 require 'redis'
-require 'ostruct'
 
 module Cartman
   module_function

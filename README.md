@@ -28,6 +28,7 @@ Cartman has a few (read 3) configuration options you can set, most likely in an 
 Cartman.config do
   cart_expires_in 604800 # one week, in seconds.  This is the default
   cost_field :cost # for cart totaling
+  quantity_field :quantity # for quantity totaling
   redis Redis.new # set the redis connection here
 end
 ```
@@ -54,9 +55,13 @@ The `Cart` object also has some handy methods that you should be aware of:
   - `:type` - to store the class of the product you're adding.  Useful if you have multiple models that can go in the cart.
   - `:cost` - which if you use will let you use the `Cart#total` method without any extra configuration
   - `:quantity` - which if you use will let you use the `Cart#quantity` method without any extra configuration
+- `remove_item(item) - which, you guessed it, removes an item.  This method takes an Item object, not a hash.
+- `contains?(Product)` - This is a biggie.  It will tell you if a certain item is in the cart.  And the way it works is you pass it an object, like an instance of a Product model, and it will examine the class, and the id, and look to see if it's in the cart already.  This method only works if the `:id` and `:type` keys are set in the item's data hash.
 - `count` - which will give you the total number of items in the cart.  Faster than `cart.items.size` because it doesn't load all of the item data from redis.
 - `quantity` - which will return the total quantity of all the items.  The quantity field is set in the config block, by default it's :quantity
-- `remove_item(item) - which, you guessed it, removes an item.  This method takes an Item object, not a hash.
+- `ttl` - will tell you how many seconds until the cart expires.  It will return -1 if the cart will never expire
+- `touch` - which will reset the ttl back to whatever expiration length is set in the config.  Touch is automatically called after `add_item` and `remove_item`
+- `destroy!` - which will delete the cart, and all the line_items out of it
 
 Lets walk through an example implementation with a Rails app that has a User model and a Product model.
 
