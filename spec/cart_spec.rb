@@ -4,6 +4,10 @@ describe Cartman do
   describe Cartman::Cart do
     let(:cart) { Cartman::Cart.new(1) }
 
+    before(:all) do
+      Bottle = Struct.new(:id)
+    end
+
     before(:each) do
       Cartman.config.redis.flushdb
     end
@@ -73,10 +77,6 @@ describe Cartman do
     end
 
     describe "#contains?(item)" do
-      before(:all) do
-        Bottle = Struct.new(:id)
-      end
-
       before(:each) do
         cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
         cart.add_item(id: 34, name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)
@@ -95,6 +95,23 @@ describe Cartman do
         cart.contains?(Bottle.new(17)).should be_false
         cart.remove_item(cart.items.last)
         cart.contains?(Bottle.new(34)).should be_false
+      end
+    end
+
+    describe "#find(item)" do
+      before(:each) do
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
+        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)
+      end
+
+      it "should take some object, and return the Item that corresponds to it" do
+        cart.find(Bottle.new(17)).quantity.should eq("2")
+        cart.find(Bottle.new(17)).name.should eq("Bordeux")
+        cart.find(Bottle.new(34)).name.should eq("Cabernet")
+      end
+
+      it "should return nil if the Item is not in the cart" do
+        cart.find(Bottle.new(23)).should be(nil)
       end
     end
 
@@ -149,6 +166,7 @@ describe Cartman do
         Cartman.config.redis.exists("cartman:line_item:1").should be_false
         Cartman.config.redis.exists("cartman:line_item:2").should be_false
         Cartman.config.redis.exists("cartman:cart:1:index").should be_false
+        Cartman.config.redis.exists("cartman:cart:1:index:Bottle:17").should be_false
       end
     end
 
@@ -157,6 +175,8 @@ describe Cartman do
         cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
         cart.touch
         cart.ttl.should eq(Cartman.config.cart_expires_in)
+        Cartman.config.redis.ttl("cartman:cart:1:index").should eq(Cartman.config.cart_expires_in)
+        Cartman.config.redis.ttl("cartman:cart:1:index:Bottle:17").should eq(Cartman.config.cart_expires_in)
       end
     end
 
@@ -167,12 +187,14 @@ describe Cartman do
       end
 
       it "should rename the key, and index_key if it exists" do
-        cart.add_item(id: 17, name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
         cart.reassign(2)
         Cartman.config.redis.exists("cartman:cart:1").should be_false
         Cartman.config.redis.exists("cartman:cart:1:index").should be_false
+        Cartman.config.redis.exists("cartman:cart:1:index:Bottle:17").should be_false
         Cartman.config.redis.exists("cartman:cart:2").should be_true
-        Cartman.config.redis.exists("cartman:cart:2:index").should be_false
+        Cartman.config.redis.exists("cartman:cart:2:index").should be_true
+        Cartman.config.redis.exists("cartman:cart:2:index:Bottle:17").should be_true
         cart.send(:key)[-1].should eq("2")
         cart.add_item(id: 18, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
         cart.reassign(1)

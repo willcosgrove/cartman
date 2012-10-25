@@ -26,10 +26,10 @@ describe Cartman do
       end
     end
 
-    describe "#remove" do
+    describe "#destroy" do
       it "should remove the item from the cart" do
         item_id = item._id
-        item.remove
+        item.destroy
         Cartman.config.redis.sismember(cart.send(:key), item_id).should be_false
         Cartman.config.redis.exists("cartman:line_item:#{item_id}").should be_false
       end

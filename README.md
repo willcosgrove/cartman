@@ -42,7 +42,7 @@ To create a new shopping cart, just call `Cartman::Cart.new(user.id)`.  The para
 
 The returned Items come back as `Cartman::Item` instances, which have a few special methods to be aware of:
 
-- `remove` - which will remove the item from the cart
+- `destroy` - which will remove the item from the cart
 - `cart` - which will return the parent cart, think ActiveRecord association
 - `_id` - which will return the id of the item, if you need that for whatever reason
 - `_key` - which will return the redis key the data is stored in.  Probably won't need that, but it's there.
@@ -57,6 +57,7 @@ The `Cart` object also has some handy methods that you should be aware of:
   - `:quantity` - which if you use will let you use the `Cart#quantity` method without any extra configuration
 - `remove_item(item)` - which, you guessed it, removes an item.  This method takes an Item object, not a hash.
 - `contains?(Product)` - This is a biggie.  It will tell you if a certain item is in the cart.  And the way it works is you pass it an object, like an instance of a Product model, and it will examine the class, and the id, and look to see if it's in the cart already.  This method only works if the `:id` and `:type` keys are set in the item's data hash.
+- `find(Product)` - This will return the `Item` object that represents the object passed in.  It works like `contains?` and uses class, and id.  It only works if the `:id` and `:type` keys are set in the item's data hash.
 - `count` - which will give you the total number of items in the cart.  Faster than `cart.items.size` because it doesn't load all of the item data from redis.
 - `quantity` - which will return the total quantity of all the items.  The quantity field is set in the config block, by default it's :quantity
 - `ttl` - will tell you how many seconds until the cart expires.  It will return -1 if the cart will never expire

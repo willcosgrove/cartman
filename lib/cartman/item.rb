@@ -14,7 +14,7 @@ module Cartman
       @cart ||= Cart.new(@cart_id)
     end
 
-    def remove
+    def destroy
       cart.remove_item(self)
     end
 

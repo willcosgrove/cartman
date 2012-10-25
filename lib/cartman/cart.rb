@@ -13,6 +13,7 @@ module Cartman
       @@redis.sadd key, line_item_id
       if options.has_key?(:id) && options.has_key?(:type)
         @@redis.sadd index_key, "#{options[:type]}:#{options[:id]}"
+        @@redis.set index_key_for(options), line_item_id
       end
       touch
       get_item(line_item_id)
@@ -23,6 +24,7 @@ module Cartman
       @@redis.srem key, item._id
       begin
         @@redis.srem index_key, "#{item.type}:#{item.id}"
+        @@redis.del index_key_for(item)
       rescue KeyError
       end
       touch
@@ -36,6 +38,12 @@ module Cartman
 
     def contains?(object)
       @@redis.sismember index_key, "#{object.class}:#{object.id}"
+    end
+
+    def find(object)
+      if contains?(object)
+        get_item(@@redis.get(index_key_for(object)).to_i)
+      end
     end
 
     def count
@@ -62,6 +70,8 @@ module Cartman
       keys = line_item_keys
       keys << key
       keys << index_key
+      keys << index_keys
+      keys.flatten!
       @@redis.pipelined do
         keys.each do |key|
           @@redis.del key
@@ -72,7 +82,11 @@ module Cartman
     def touch
       keys_to_expire = line_item_keys
       keys_to_expire << key
-      keys_to_expire << index_key
+      if @@redis.exists index_key
+        keys_to_expire << index_key
+        keys_to_expire << index_keys
+        keys_to_expire.flatten!
+      end
       @@redis.pipelined do
         keys_to_expire.each do |item|
           @@redis.expire item, Cartman::Configuration.cart_expires_in
@@ -82,10 +96,14 @@ module Cartman
 
     def reassign(new_id)
       if @@redis.exists key
+        new_index_keys = items.collect { |item|
+          index_key_for(item, new_id)
+        }
         @@redis.rename key, key(new_id)
-      end
-      if @@redis.exists index_key
         @@redis.rename index_key, index_key(new_id)
+        index_keys.zip(new_index_keys).each do |key, value|
+          @@redis.rename key, value
+        end
       end
       @uid = new_id
     end
@@ -100,6 +118,21 @@ module Cartman
       key(id) + ":index"
     end
 
+    def index_keys(id=@uid)
+      @@redis.keys "#{index_key(id)}:*"
+    end
+
+    def index_key_for(object, id=@uid)
+      case object
+      when Hash
+        index_key(id) + ":#{object[:type]}:#{object[:id]}"
+      when Item
+        index_key(id) + ":#{object.type}:#{object.id}"
+      else
+        index_key(id) + ":#{object.class}:#{object.id}"
+      end
+    end
+
     def line_item_ids
       @@redis.smembers key
     end
@@ -109,7 +142,7 @@ module Cartman
     end
 
     def get_item(id)
-      Item.new(id, @uid, @@redis.hgetall("cartman:line_item:#{id}").inject({}){|memo,(k,v)| memo[k.to_sym] = v; memo})
+      Item.new(id, @uid, @@redis.hgetall("cartman:line_item:#{id}").inject({}){|hash,(k,v)| hash[k.to_sym] = v; hash})
     end
   end
 end
