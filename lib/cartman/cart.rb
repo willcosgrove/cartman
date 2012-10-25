@@ -22,10 +22,14 @@ module Cartman
       @@redis.del "cartman:line_item:#{item._id}"
       @@redis.srem key, item._id
       begin
-        @@redis.srem index_key, "#{item.type}:#{item.id}"
+        @@redis.srem index_key, item.instance_of?(Item) ? "#{item.type}:#{item.id}" : "#{item.class}:#{item.id}"
       rescue KeyError
       end
       touch
+    end
+
+    def get_item(id)
+      Item.new(id, @uid, @@redis.hgetall("cartman:line_item:#{id}").inject({}){|memo,(k,v)| memo[k.to_sym] = v; memo})
     end
 
     def items
@@ -108,8 +112,5 @@ module Cartman
       line_item_ids.collect{ |id| "cartman:line_item:#{id}" }
     end
 
-    def get_item(id)
-      Item.new(id, @uid, @@redis.hgetall("cartman:line_item:#{id}").inject({}){|memo,(k,v)| memo[k.to_sym] = v; memo})
-    end
   end
 end
