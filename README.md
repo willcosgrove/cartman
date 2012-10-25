@@ -55,7 +55,7 @@ The `Cart` object also has some handy methods that you should be aware of:
   - `:type` - to store the class of the product you're adding.  Useful if you have multiple models that can go in the cart.
   - `:cost` - which if you use will let you use the `Cart#total` method without any extra configuration
   - `:quantity` - which if you use will let you use the `Cart#quantity` method without any extra configuration
-- `remove_item(item) - which, you guessed it, removes an item.  This method takes an Item object, not a hash.
+- `remove_item(item)` - which, you guessed it, removes an item.  This method takes an Item object, not a hash.
 - `contains?(Product)` - This is a biggie.  It will tell you if a certain item is in the cart.  And the way it works is you pass it an object, like an instance of a Product model, and it will examine the class, and the id, and look to see if it's in the cart already.  This method only works if the `:id` and `:type` keys are set in the item's data hash.
 - `count` - which will give you the total number of items in the cart.  Faster than `cart.items.size` because it doesn't load all of the item data from redis.
 - `quantity` - which will return the total quantity of all the items.  The quantity field is set in the config block, by default it's :quantity
