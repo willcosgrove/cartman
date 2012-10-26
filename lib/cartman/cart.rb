@@ -8,10 +8,11 @@ module Cartman
     end
 
     def add_item(options)
+      raise "Must specify both :id and :type" unless options.has_key?(:id) && options.has_key?(:type)
       line_item_id = @@redis.incr CART_LINE_ITEM_ID_KEY
-      @@redis.mapped_hmset("cartman:line_item:#{line_item_id}", options)
-      @@redis.sadd key, line_item_id
-      if options.has_key?(:id) && options.has_key?(:type)
+      @@redis.pipelined do
+        @@redis.mapped_hmset("cartman:line_item:#{line_item_id}", options)
+        @@redis.sadd key, line_item_id
         @@redis.sadd index_key, "#{options[:type]}:#{options[:id]}"
         @@redis.set index_key_for(options), line_item_id
       end
@@ -22,10 +23,10 @@ module Cartman
     def remove_item(item)
       @@redis.del "cartman:line_item:#{item._id}"
       @@redis.srem key, item._id
-      begin
-        @@redis.srem index_key, "#{item.type}:#{item.id}"
-        @@redis.del index_key_for(item)
-      rescue KeyError
+      @@redis.srem index_key, "#{item.type}:#{item.id}"
+      @@redis.del index_key_for(item)
+      index_keys.each do |key|
+        @@redis.del key
       end
       touch
     end

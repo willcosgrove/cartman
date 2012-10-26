@@ -38,10 +38,10 @@ describe Cartman do
         Cartman.config.redis.sismember("cartman:cart:1:index", "Bottle:17").should be_true
       end
 
-      it "should not add an index key if type and ID are not set" do
-        cart.add_item(id: 18, name: "Cordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
-        Cartman.config.redis.sismember("cartman:cart:1:index", "Bottle:18").should be_false
-        Cartman.config.redis.scard("cartman:cart:1:index").should eq(1)
+      it "should squack if type and/or ID are not set" do
+        expect { cart.add_item(id: 18, name: "Cordeux", unit_cost: 92.12, cost: 184.24, quantity: 2) }.to raise_error("Must specify both :id and :type")
+        expect { cart.add_item(type: "Bottle", name: "Cordeux", unit_cost: 92.12, cost: 184.24, quantity: 2) }.to raise_error("Must specify both :id and :type")
+        expect { cart.add_item(name: "Cordeux", unit_cost: 92.12, cost: 184.24, quantity: 2) }.to raise_error("Must specify both :id and :type")
       end
 
       it "should return an Item" do
@@ -81,7 +81,7 @@ describe Cartman do
 
       before(:each) do
         cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
-        cart.add_item(id: 34, name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)
+        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)
       end
 
       it "should be able to tell you that an item in the cart is present" do
