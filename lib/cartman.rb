@@ -2,6 +2,7 @@ require "cartman/version"
 require "cartman/configuration"
 require "cartman/cart"
 require "cartman/item"
+require "cartman/item_collection"
 require 'redis'
 
 module Cartman

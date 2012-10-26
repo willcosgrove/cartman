@@ -51,18 +51,20 @@ The returned Items come back as `Cartman::Item` instances, which have a few spec
 The `Cart` object also has some handy methods that you should be aware of:
 
 - `add_item(data)` - which is the life blood of Cartman.  This method takes a hash of data you would like to store with the item.  Here's a few suggestions of keys you may want in your hash:
-  - `:id` - to store the ID of the product you're adding
-  - `:type` - to store the class of the product you're adding.  Useful if you have multiple models that can go in the cart.
-  - `:cost` - which if you use will let you use the `Cart#total` method without any extra configuration
-  - `:quantity` - which if you use will let you use the `Cart#quantity` method without any extra configuration
+  - `:id` - (*required*) to store the ID of the model you're adding
+  - `:type` - (*required*) to store the class of the model you're adding.
+  - `:unit_cost` - This field is required if you want to take advantage of the `Item#cost` method, and the `Cart#total` method.
+  - `:quantity` - which if you use will let you use the `Cart#quantity` and `Cart#total` methods without any extra configuration.
 - `remove_item(item)` - which, you guessed it, removes an item.  This method takes an Item object, not a hash.
 - `contains?(Product)` - This is a biggie.  It will tell you if a certain item is in the cart.  And the way it works is you pass it an object, like an instance of a Product model, and it will examine the class, and the id, and look to see if it's in the cart already.  This method only works if the `:id` and `:type` keys are set in the item's data hash.
 - `find(Product)` - This will return the `Item` object that represents the object passed in.  It works like `contains?` and uses class, and id.  It only works if the `:id` and `:type` keys are set in the item's data hash.
+- `items` - this returns a magic array of all the items.  I call it magic because you can call on it:
+  - `each_with_object` - which will act like a regular `each` call, but the block will yield the `Item` and the object it represents by using the `:type` and `:id` keys.
 - `count` - which will give you the total number of items in the cart.  Faster than `cart.items.size` because it doesn't load all of the item data from redis.
-- `quantity` - which will return the total quantity of all the items.  The quantity field is set in the config block, by default it's :quantity
-- `ttl` - will tell you how many seconds until the cart expires.  It will return -1 if the cart will never expire
-- `touch` - which will reset the ttl back to whatever expiration length is set in the config.  Touch is automatically called after `add_item` and `remove_item`
-- `destroy!` - which will delete the cart, and all the line_items out of it
+- `quantity` - which will return the total quantity of all the items.  The quantity field is set in the config block, by default it's `:quantity`
+- `ttl` - will tell you how many seconds until the cart expires.  It will return -1 if the cart will never expire.
+- `touch` - which will reset the ttl back to whatever expiration length is set in the config.  Touch is automatically called after `add_item` and `remove_item`.
+- `destroy!` - which will delete the cart, and all the line_items out of it.
 - `reassign(id)` - this method will reassign the cart's unique identifier.  So to access this cart at a later time after reassigning, you would put `Cart.new(reassigned_id)`.  This is useful for having a cart for an unsigned in user.  You can use their session ID while they're unauthenticated, and then when they sign in, you can reassign the cart to the user's ID.  NOTE: Reassigning will overwrite any cart in it's way.
 
 Lets walk through an example implementation with a Rails app that has a User model and a Product model.

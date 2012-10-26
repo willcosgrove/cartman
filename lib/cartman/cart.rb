@@ -31,9 +31,7 @@ module Cartman
     end
 
     def items
-      items = line_item_ids.collect { |item_id|
-        get_item(item_id)
-      }
+      ItemCollection.new(line_item_ids.collect{ |item_id| get_item(item_id)})
     end
 
     def contains?(object)

@@ -2,11 +2,8 @@ require 'spec_helper'
 
 describe Cartman do
   describe Cartman::Cart do
+    let(:Bottle) { Struct.new(:id) }
     let(:cart) { Cartman::Cart.new(1) }
-
-    before(:all) do
-      Bottle = Struct.new(:id)
-    end
 
     before(:each) do
       Cartman.config.redis.flushdb
@@ -69,14 +66,19 @@ describe Cartman do
         cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)
       end
 
-      it "should return an array of Items" do
-        cart.items.first.class.should eq(Cartman::Item)
+      it "should return an ItemCollection of Items" do
+        cart.items.class.should be(Cartman::ItemCollection)
+        cart.items.first.class.should be(Cartman::Item)
         cart.items.first.id.should eq("17")
         cart.items.first.name.should eq("Bordeux")
       end
     end
 
     describe "#contains?(item)" do
+      before(:all) do
+        Bottle = Struct.new(:id)
+      end
+
       before(:each) do
         cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
         cart.add_item(id: 34, name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)
@@ -99,6 +101,7 @@ describe Cartman do
     end
 
     describe "#find(item)" do
+
       before(:each) do
         cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
         cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)

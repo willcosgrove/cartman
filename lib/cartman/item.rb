@@ -18,6 +18,10 @@ module Cartman
       cart.remove_item(self)
     end
 
+    def ==(item)
+      @id == item._id
+    end
+
     def _key
       "cartman:line_item:#{@id}"
     end
