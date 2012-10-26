@@ -10,6 +10,12 @@ module Cartman
       @id
     end
 
+    def cost
+      unit_cost = (@data.fetch(Cartman::Configuration.unit_cost_field).to_f * 100).to_i
+      quantity = @data.fetch(Cartman::Configuration.quantity_field).to_i
+      (unit_cost * quantity) / 100.0
+    end
+
     def cart
       @cart ||= Cart.new(@cart_id)
     end

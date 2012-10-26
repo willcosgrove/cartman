@@ -4,7 +4,7 @@ module Cartman
   class Configuration
     @@configuration = {
       cart_expires_in: 604800, # one week
-      cost_field: :cost, # for cart totaling
+      unit_cost_field: :unit_cost, # for cart totaling and costing
       quantity_field: :quantity, # for cart totaling
       redis: Redis.new, # Redis connection
     }

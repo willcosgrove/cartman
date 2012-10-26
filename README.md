@@ -27,14 +27,16 @@ Cartman has a few (read 3) configuration options you can set, most likely in an 
 # config/initializers/cartman.rb
 Cartman.config do
   cart_expires_in 604800 # one week, in seconds.  This is the default
-  cost_field :cost # for cart totaling
+  unit_cost_field :unit_cost # for cart totaling
   quantity_field :quantity # for quantity totaling
   redis Redis.new # set the redis connection here
 end
 ```
 
 - The `cart_expires_in` setting will let you set how long a cart should live.  If no items are added to the cart before the time expires, the cart will be cleared.  If you want to disable cart expiration, set this to `-1`.
-- `cost_field` lets you tell Cartman where you're storing the "cost" of each item, so that when you call `cart.total` it knows which values to sum.
+- `unit_cost_field` lets you tell Cartman where you're storing the unit_cost of each item, so that you can use the `cost` method on the item, and the `total` method on `Cart`.
+- `quantity_field` lets you tell Cartman where you're storing the quantity of each item.  The `Item#cost` method uses this along with the `unit_cost` field to determine the cost.
+- `redis` lets you set the redis connection you want to use.  Note that this is not redis connection options, this is an actual instance of `Redis`.
 
 ## Usage
 
@@ -42,6 +44,7 @@ To create a new shopping cart, just call `Cartman::Cart.new(user.id)`.  The para
 
 The returned Items come back as `Cartman::Item` instances, which have a few special methods to be aware of:
 
+- `cost` - which will return the `:unit_cost` multiplied by the `:quantity`.
 - `destroy` - which will remove the item from the cart
 - `cart` - which will return the parent cart, think ActiveRecord association
 - `_id` - which will return the id of the item, if you need that for whatever reason
@@ -60,6 +63,7 @@ The `Cart` object also has some handy methods that you should be aware of:
 - `find(Product)` - This will return the `Item` object that represents the object passed in.  It works like `contains?` and uses class, and id.  It only works if the `:id` and `:type` keys are set in the item's data hash.
 - `items` - this returns a magic array of all the items.  I call it magic because you can call on it:
   - `each_with_object` - which will act like a regular `each` call, but the block will yield the `Item` and the object it represents by using the `:type` and `:id` keys.
+- `total` - will sum all of the `cost` return values of all of the items in the cart.  For this to work, the `:unit_cost` and `:quantity` fields need to be set for all items.
 - `count` - which will give you the total number of items in the cart.  Faster than `cart.items.size` because it doesn't load all of the item data from redis.
 - `quantity` - which will return the total quantity of all the items.  The quantity field is set in the config block, by default it's `:quantity`
 - `ttl` - will tell you how many seconds until the cart expires.  It will return -1 if the cart will never expire.

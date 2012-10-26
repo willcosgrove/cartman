@@ -17,7 +17,7 @@ describe Cartman do
 
     describe "#add_item" do
       before(:each) do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
       end
 
       it "creates a line item key" do
@@ -39,20 +39,20 @@ describe Cartman do
       end
 
       it "should squack if type and/or ID are not set" do
-        expect { cart.add_item(id: 18, name: "Cordeux", unit_cost: 92.12, cost: 184.24, quantity: 2) }.to raise_error("Must specify both :id and :type")
-        expect { cart.add_item(type: "Bottle", name: "Cordeux", unit_cost: 92.12, cost: 184.24, quantity: 2) }.to raise_error("Must specify both :id and :type")
-        expect { cart.add_item(name: "Cordeux", unit_cost: 92.12, cost: 184.24, quantity: 2) }.to raise_error("Must specify both :id and :type")
+        expect { cart.add_item(id: 18, name: "Cordeux", unit_cost: 92.12, quantity: 2) }.to raise_error("Must specify both :id and :type")
+        expect { cart.add_item(type: "Bottle", name: "Cordeux", unit_cost: 92.12, quantity: 2) }.to raise_error("Must specify both :id and :type")
+        expect { cart.add_item(name: "Cordeux", unit_cost: 92.12, quantity: 2) }.to raise_error("Must specify both :id and :type")
       end
 
       it "should return an Item" do
-        item = cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)
+        item = cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, quantity: 2)
         item.class.should eq(Cartman::Item)
       end
     end
 
     describe "#remove_item" do
       it "should remove the id from the set, and delete the line_item key" do
-        item = cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
+        item = cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
         item_id = item._id
         cart.remove_item(item)
         Cartman.config.redis.sismember(cart.send(:key), item_id).should be_false
@@ -62,8 +62,8 @@ describe Cartman do
 
     describe "#items" do
       before(:each) do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
-        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
+        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, quantity: 2)
       end
 
       it "should return an ItemCollection of Items" do
@@ -80,8 +80,8 @@ describe Cartman do
       end
 
       before(:each) do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
-        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
+        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, quantity: 2)
       end
 
       it "should be able to tell you that an item in the cart is present" do
@@ -103,8 +103,8 @@ describe Cartman do
     describe "#find(item)" do
 
       before(:each) do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
-        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
+        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, quantity: 2)
       end
 
       it "should take some object, and return the Item that corresponds to it" do
@@ -120,16 +120,16 @@ describe Cartman do
 
     describe "#count" do
       it "should return the number of items in the cart" do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
-        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
+        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, quantity: 2)
         cart.count.should eq(2)
       end
     end
 
     describe "#quantity" do
       it "should return the sum of the default quantity field" do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
-        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
+        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, quantity: 2)
         cart.quantity.should eq(4)
       end
 
@@ -137,26 +137,32 @@ describe Cartman do
         Cartman.config do
           quantity_field :qty
         end
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, qty: 2)
-        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost: 184.24, qty: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, qty: 2)
+        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, qty: 2)
         cart.quantity.should eq(4)
+        Cartman.config do
+          quantity_field :quantity
+        end
       end
     end
 
     describe "#total" do
       it "should total the default costs field" do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost: 184.24, quantity: 2)
-        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost: 184.24, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
+        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, quantity: 2)
         cart.total.should eq(368.48)
       end
 
       it "should total whatever cost field the user sets" do
         Cartman.config do
-          cost_field :cost_in_cents
+          unit_cost_field :unit_cost_in_cents
         end
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
-        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost_in_cents: 9212, quantity: 2)
+        cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost_in_cents: 9212, quantity: 2)
         cart.total.should eq(36848)
+        Cartman.config do
+          unit_cost_field :unit_cost
+        end
       end
     end
 

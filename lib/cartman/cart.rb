@@ -57,7 +57,7 @@ module Cartman
 
     def total
       items.collect { |item|
-        (item.send(Cartman::Configuration.cost_field).to_f * 100).to_i
+        (item.cost * 100).to_i
       }.inject{|sum,cost| sum += cost} / 100.0
     end
 
