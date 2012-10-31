@@ -12,6 +12,7 @@ module Cartman
       line_item_id = @@redis.incr CART_LINE_ITEM_ID_KEY
       @@redis.pipelined do
         @@redis.mapped_hmset("cartman:line_item:#{line_item_id}", options)
+        @@redis.hincrby("cartman:line_item:#{line_item_id}", :_version, 1)
         @@redis.sadd key, line_item_id
         @@redis.sadd index_key, "#{options[:type]}:#{options[:id]}"
         @@redis.set index_key_for(options), line_item_id
@@ -91,6 +92,11 @@ module Cartman
           @@redis.expire item, Cartman::Configuration.cart_expires_in
         end
       end
+      @@redis.hincrby self.class.versions_key, version_key, 1
+    end
+
+    def version
+      @@redis.hget(self.class.versions_key, version_key).to_i
     end
 
     def reassign(new_id)
@@ -107,6 +113,10 @@ module Cartman
       @uid = new_id
     end
 
+    def cache_key
+      "cart/#{@uid}-#{version}"
+    end
+
     private
 
     def key(id=@uid)
@@ -115,6 +125,14 @@ module Cartman
 
     def index_key(id=@uid)
       key(id) + ":index"
+    end
+
+    def version_key(id=@uid)
+      id
+    end
+
+    def self.versions_key
+      "cartman:cart:versions"
     end
 
     def index_keys(id=@uid)

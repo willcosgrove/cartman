@@ -28,14 +28,29 @@ module Cartman
       @id == item._id
     end
 
+    def touch
+      cart.touch
+      Cartman::Configuration.redis.hincrby _key, :_version, 1
+    end
+
     def _key
       "cartman:line_item:#{@id}"
+    end
+
+    def _version
+      super.to_i
+    end
+
+    def cache_key
+      "item/#{@id}-#{_version}"
     end
 
     def method_missing(method, *args, &block)
       if method.to_s =~ /=\z/
         Cartman::Configuration.redis.hset _key, method[0..-2], args[0].to_s
         @data.store(method[0..-2].to_sym, args[0].to_s)
+        version = touch
+        @data.store(:_version, version)
       else
         @data.fetch(method)
       end

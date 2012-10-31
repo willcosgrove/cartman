@@ -24,6 +24,10 @@ describe Cartman do
         new_item = cart.send(:get_item, item._id)
         new_item.quantity.should eq("3")
       end
+
+      it "should touch the item and cart" do
+        expect{item.quantity = 4}.to change{item._version}.by(1)
+      end
     end
 
     describe "#cost" do
@@ -40,6 +44,19 @@ describe Cartman do
         item.destroy
         Cartman.config.redis.sismember(cart.send(:key), item_id).should be_false
         Cartman.config.redis.exists("cartman:line_item:#{item_id}").should be_false
+      end
+    end
+
+    describe "#touch" do
+      it "should record that the record was changed" do
+        item.touch
+        item._version.should eq(1)
+      end
+    end
+
+    describe "#cache_key" do
+      it "should return item/{id}-{version}" do
+        item.cache_key.should eq("item/#{item._id}-#{item._version}")
       end
     end
 

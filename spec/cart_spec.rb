@@ -187,6 +187,12 @@ describe Cartman do
         Cartman.config.redis.ttl("cartman:cart:1:index").should eq(Cartman.config.cart_expires_in)
         Cartman.config.redis.ttl("cartman:cart:1:index:Bottle:17").should eq(Cartman.config.cart_expires_in)
       end
+      
+      it "should record that the cart was updated" do
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
+        cart.touch
+        cart.version.should eq(2)
+      end
     end
 
     describe "#reassign" do
@@ -212,6 +218,12 @@ describe Cartman do
         Cartman.config.redis.exists("cartman:cart:1").should be_true
         Cartman.config.redis.exists("cartman:cart:1:index").should be_true
         cart.send(:key)[-1].should eq("1")
+      end
+    end
+
+    describe "#cache_key" do
+      it "should return /cart/{cart_id}-{version}/" do
+        cart.cache_key.should eq("cart/#{cart.instance_variable_get(:@uid)}-#{cart.version}")
       end
     end
   end
