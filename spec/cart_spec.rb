@@ -204,6 +204,7 @@ describe Cartman do
       it "should rename the key, and index_key if it exists" do
         cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
         cart.reassign(2)
+        cart.items.size.should be(1)
         Cartman.config.redis.exists("cartman:cart:1").should be_false
         Cartman.config.redis.exists("cartman:cart:1:index").should be_false
         Cartman.config.redis.exists("cartman:cart:1:index:Bottle:17").should be_false
@@ -213,6 +214,7 @@ describe Cartman do
         cart.send(:key)[-1].should eq("2")
         cart.add_item(id: 18, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
         cart.reassign(1)
+        cart.items.size.should be(2)
         Cartman.config.redis.exists("cartman:cart:2").should be_false
         Cartman.config.redis.exists("cartman:cart:2:index").should be_false
         Cartman.config.redis.exists("cartman:cart:1").should be_true
