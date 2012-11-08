@@ -26,9 +26,6 @@ module Cartman
       @@redis.srem key, item._id
       @@redis.srem index_key, "#{item.type}:#{item.id}"
       @@redis.del index_key_for(item)
-      index_keys.each do |key|
-        @@redis.del key
-      end
       touch
     end
 

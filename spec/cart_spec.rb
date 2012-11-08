@@ -58,6 +58,16 @@ describe Cartman do
         Cartman.config.redis.sismember(cart.send(:key), item_id).should be_false
         Cartman.config.redis.exists("cartman:line_item:#{item_id}").should be_false
       end
+
+      it "should not delete the indecies for other items" do
+        item = cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
+        item2 = cart.add_item(id: 18, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
+        Cartman.config.redis.exists("cartman:cart:1:index:Bottle:17").should be_true
+        Cartman.config.redis.exists("cartman:cart:1:index:Bottle:18").should be_true
+        cart.remove_item(item)
+        Cartman.config.redis.exists("cartman:cart:1:index:Bottle:17").should be_false
+        Cartman.config.redis.exists("cartman:cart:1:index:Bottle:18").should be_true
+      end
     end
 
     describe "#items" do
