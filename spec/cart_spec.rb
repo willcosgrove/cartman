@@ -144,14 +144,14 @@ describe Cartman do
       end
 
       it "should return the sum of the defined quantity field" do
-        Cartman.config do
-          quantity_field :qty
+        Cartman.config do |c|
+          c.quantity_field = :qty
         end
         cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, qty: 2)
         cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, qty: 2)
         cart.quantity.should eq(4)
-        Cartman.config do
-          quantity_field :quantity
+        Cartman.config do |c|
+          c.quantity_field = :quantity
         end
       end
     end
@@ -164,14 +164,14 @@ describe Cartman do
       end
 
       it "should total whatever cost field the user sets" do
-        Cartman.config do
-          unit_cost_field :unit_cost_in_cents
+        Cartman.config do |c|
+          c.unit_cost_field = :unit_cost_in_cents
         end
         cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost_in_cents: 9212, quantity: 2)
         cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost_in_cents: 9212, quantity: 2)
         cart.total.should eq(36848)
-        Cartman.config do
-          unit_cost_field :unit_cost
+        Cartman.config do |c|
+          c.unit_cost_field = :unit_cost
         end
       end
     end
@@ -197,7 +197,7 @@ describe Cartman do
         Cartman.config.redis.ttl("cartman:cart:1:index").should eq(Cartman.config.cart_expires_in)
         Cartman.config.redis.ttl("cartman:cart:1:index:Bottle:17").should eq(Cartman.config.cart_expires_in)
       end
-      
+
       it "should record that the cart was updated" do
         cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
         cart.touch
