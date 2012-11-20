@@ -4,28 +4,27 @@ module Cartman
 
     def initialize(uid)
       @uid = uid
-      @@redis = Cartman::Configuration.redis
     end
 
     def add_item(options)
       raise "Must specify both :id and :type" unless options.has_key?(:id) && options.has_key?(:type)
-      line_item_id = @@redis.incr CART_LINE_ITEM_ID_KEY
-      @@redis.pipelined do
-        @@redis.mapped_hmset("cartman:line_item:#{line_item_id}", options)
-        @@redis.hincrby("cartman:line_item:#{line_item_id}", :_version, 1)
-        @@redis.sadd key, line_item_id
-        @@redis.sadd index_key, "#{options[:type]}:#{options[:id]}"
-        @@redis.set index_key_for(options), line_item_id
+      line_item_id = redis.incr CART_LINE_ITEM_ID_KEY
+      redis.pipelined do
+        redis.mapped_hmset("cartman:line_item:#{line_item_id}", options)
+        redis.hincrby("cartman:line_item:#{line_item_id}", :_version, 1)
+        redis.sadd key, line_item_id
+        redis.sadd index_key, "#{options[:type]}:#{options[:id]}"
+        redis.set index_key_for(options), line_item_id
       end
       touch
       get_item(line_item_id)
     end
 
     def remove_item(item)
-      @@redis.del "cartman:line_item:#{item._id}"
-      @@redis.srem key, item._id
-      @@redis.srem index_key, "#{item.type}:#{item.id}"
-      @@redis.del index_key_for(item)
+      redis.del "cartman:line_item:#{item._id}"
+      redis.srem key, item._id
+      redis.srem index_key, "#{item.type}:#{item.id}"
+      redis.del index_key_for(item)
       touch
     end
 
@@ -34,22 +33,22 @@ module Cartman
     end
 
     def contains?(object)
-      @@redis.sismember index_key, "#{object.class}:#{object.id}"
+      redis.sismember index_key, "#{object.class}:#{object.id}"
     end
 
     def find(object)
       if contains?(object)
-        get_item(@@redis.get(index_key_for(object)).to_i)
+        get_item(redis.get(index_key_for(object)).to_i)
       end
     end
 
     def count
-      @@redis.scard key
+      redis.scard key
     end
 
     def quantity
       line_item_keys.collect { |item_key|
-        @@redis.hget item_key, Cartman::Configuration.quantity_field
+        redis.hget item_key, Cartman.config.quantity_field
       }.inject(0){|sum,quantity| sum += quantity.to_i}
     end
 
@@ -60,7 +59,7 @@ module Cartman
     end
 
     def ttl
-      @@redis.ttl key
+      redis.ttl key
     end
 
     def destroy!
@@ -69,9 +68,9 @@ module Cartman
       keys << index_key
       keys << index_keys
       keys.flatten!
-      @@redis.pipelined do
+      redis.pipelined do
         keys.each do |key|
-          @@redis.del key
+          redis.del key
         end
       end
     end
@@ -79,32 +78,32 @@ module Cartman
     def touch
       keys_to_expire = line_item_keys
       keys_to_expire << key
-      if @@redis.exists index_key
+      if redis.exists index_key
         keys_to_expire << index_key
         keys_to_expire << index_keys
         keys_to_expire.flatten!
       end
-      @@redis.pipelined do
+      redis.pipelined do
         keys_to_expire.each do |item|
-          @@redis.expire item, Cartman::Configuration.cart_expires_in
+          redis.expire item, Cartman.config.cart_expires_in
         end
       end
-      @@redis.hincrby self.class.versions_key, version_key, 1
+      redis.hincrby self.class.versions_key, version_key, 1
     end
 
     def version
-      @@redis.hget(self.class.versions_key, version_key).to_i
+      redis.hget(self.class.versions_key, version_key).to_i
     end
 
     def reassign(new_id)
-      if @@redis.exists key
+      if redis.exists key
         new_index_keys = items.collect { |item|
           index_key_for(item, new_id)
         }
-        @@redis.rename key, key(new_id)
-        @@redis.rename index_key, index_key(new_id)
+        redis.rename key, key(new_id)
+        redis.rename index_key, index_key(new_id)
         index_keys.zip(new_index_keys).each do |key, value|
-          @@redis.rename key, value
+          redis.rename key, value
         end
       end
       @uid = new_id
@@ -133,7 +132,7 @@ module Cartman
     end
 
     def index_keys(id=@uid)
-      @@redis.keys "#{index_key(id)}:*"
+      redis.keys "#{index_key(id)}:*"
     end
 
     def index_key_for(object, id=@uid)
@@ -148,7 +147,7 @@ module Cartman
     end
 
     def line_item_ids
-      @@redis.smembers key
+      redis.smembers key
     end
 
     def line_item_keys
@@ -156,7 +155,13 @@ module Cartman
     end
 
     def get_item(id)
-      Item.new(id, @uid, @@redis.hgetall("cartman:line_item:#{id}").inject({}){|hash,(k,v)| hash[k.to_sym] = v; hash})
+      Item.new(id, @uid, redis.hgetall("cartman:line_item:#{id}").inject({}){|hash,(k,v)| hash[k.to_sym] = v; hash})
+    end
+
+    private
+
+    def redis
+      Cartman.config.redis
     end
   end
 end

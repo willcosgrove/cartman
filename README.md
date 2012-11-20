@@ -25,18 +25,18 @@ Cartman has a few (read 3) configuration options you can set, most likely in an 
 
 ```ruby
 # config/initializers/cartman.rb
-Cartman.config do
-  cart_expires_in 604800 # one week, in seconds.  This is the default
-  unit_cost_field :unit_cost # for cart totaling
-  quantity_field :quantity # for quantity totaling
-  redis Redis.new # set the redis connection here
+Cartman.config do |c|
+  c.cart_expires_in = 604800 # one week, in seconds.  This is the default
+  c.unit_cost_field = :unit_cost # for cart totaling
+  c.quantity_field = :quantity # for quantity totaling
+  c.redis = Redis.new # set the redis connection here
 end
 ```
 
-- The `cart_expires_in` setting will let you set how long a cart should live.  If no items are added to the cart before the time expires, the cart will be cleared.  If you want to disable cart expiration, set this to `-1`.
-- `unit_cost_field` lets you tell Cartman where you're storing the unit_cost of each item, so that you can use the `cost` method on the item, and the `total` method on `Cart`.
-- `quantity_field` lets you tell Cartman where you're storing the quantity of each item.  The `Item#cost` method uses this along with the `unit_cost` field to determine the cost.
-- `redis` lets you set the redis connection you want to use.  Note that this is not redis connection options, this is an actual instance of `Redis`.
+- The `cart_expires_in=` setting will let you set how long a cart should live.  If no items are added to the cart before the time expires, the cart will be cleared.  If you want to disable cart expiration, set this to `-1`.
+- `unit_cost_field=` lets you tell Cartman where you're storing the unit_cost of each item, so that you can use the `cost` method on the item, and the `total` method on `Cart`.
+- `quantity_field=` lets you tell Cartman where you're storing the quantity of each item.  The `Item#cost` method uses this along with the `unit_cost` field to determine the cost.
+- `redis=` lets you set the redis connection you want to use.  Note that this is not redis connection options, this is an actual instance of `Redis`.
 
 ## Usage
 

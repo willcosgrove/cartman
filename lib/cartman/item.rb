@@ -11,8 +11,8 @@ module Cartman
     end
 
     def cost
-      unit_cost = (@data.fetch(Cartman::Configuration.unit_cost_field).to_f * 100).to_i
-      quantity = @data.fetch(Cartman::Configuration.quantity_field).to_i
+      unit_cost = (@data.fetch(Cartman.config.unit_cost_field).to_f * 100).to_i
+      quantity = @data.fetch(Cartman.config.quantity_field).to_i
       (unit_cost * quantity) / 100.0
     end
 
@@ -30,7 +30,7 @@ module Cartman
 
     def touch
       cart.touch
-      Cartman::Configuration.redis.hincrby _key, :_version, 1
+      redis.hincrby _key, :_version, 1
     end
 
     def _key
@@ -47,13 +47,19 @@ module Cartman
 
     def method_missing(method, *args, &block)
       if method.to_s =~ /=\z/
-        Cartman::Configuration.redis.hset _key, method[0..-2], args[0].to_s
+        redis.hset _key, method[0..-2], args[0].to_s
         @data.store(method[0..-2].to_sym, args[0].to_s)
         version = touch
         @data.store(:_version, version)
       else
         @data.fetch(method)
       end
+    end
+
+    private
+
+    def redis
+      Cartman.config.redis
     end
   end
 end
