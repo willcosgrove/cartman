@@ -28,8 +28,13 @@ module Cartman
       touch
     end
 
-    def items
-      ItemCollection.new(line_item_ids.collect{ |item_id| get_item(item_id)})
+    def items(type=nil)
+      items = ItemCollection.new(line_item_ids.collect{ |item_id| get_item(item_id)})
+      if type
+        return items.select{ |item| item.type == type }
+      else
+        return items
+      end
     end
 
     def contains?(object)

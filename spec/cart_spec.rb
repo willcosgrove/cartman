@@ -74,6 +74,7 @@ describe Cartman do
       before(:each) do
         cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
         cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, quantity: 2)
+        cart.add_item(id: 35, type: "GiftCard", name: "Gift Card", unit_cost: 100.00, quantity: 1)
       end
 
       it "should return an ItemCollection of Items" do
@@ -81,6 +82,16 @@ describe Cartman do
         cart.items.first.class.should be(Cartman::Item)
         cart.items.first.id.should eq("17")
         cart.items.first.name.should eq("Bordeux")
+      end
+
+      it "should return all items in cart if no filter is given" do
+        cart.items.size.should eq(3)
+      end
+
+      it "should return a subset of the items if a filter is given" do
+        cart.items("Bottle").size.should eq(2)
+        cart.items("GiftCard").size.should eq(1)
+        cart.items("SomethingElse").size.should eq(0)
       end
     end
 
