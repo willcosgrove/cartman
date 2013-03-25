@@ -29,11 +29,11 @@ module Cartman
     end
 
     def items(type=nil)
-      items = ItemCollection.new(line_item_ids.collect{ |item_id| get_item(item_id)})
       if type
-        return items.select{ |item| item.type == type }
+        items = line_item_ids.collect{ |item_id| get_item(item_id)}.select{ |item| item.type == type }
+        return ItemCollection.new(items)
       else
-        return items
+        return ItemCollection.new(line_item_ids.collect{ |item_id| get_item(item_id)})
       end
     end
 
