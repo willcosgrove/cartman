@@ -61,7 +61,7 @@ The `Cart` object also has some handy methods that you should be aware of:
 - `remove_item(item)` - which, you guessed it, removes an item.  This method takes an Item object, not a hash.
 - `contains?(Product)` - This is a biggie.  It will tell you if a certain item is in the cart.  And the way it works is you pass it an object, like an instance of a Product model, and it will examine the class, and the id, and look to see if it's in the cart already.  This method only works if the `:id` and `:type` keys are set in the item's data hash.
 - `find(Product)` - This will return the `Item` object that represents the object passed in.  It works like `contains?` and uses class, and id.  It only works if the `:id` and `:type` keys are set in the item's data hash.
-- `items` - this returns a magic array of all the items.  I call it magic because you can call on it:
+- `items` - this returns a magic array of all the items.  You can also pass in a type string, which will return a magic array of all the items with a matching type.  I call it magic because you can call on it:
   - `each_with_object` - which will act like a regular `each` call, but the block will yield the `Item` and the object it represents by using the `:type` and `:id` keys.
 - `total` - will sum all of the `cost` return values of all of the items in the cart.  For this to work, the `:unit_cost` and `:quantity` fields need to be set for all items.
 - `count` - which will give you the total number of items in the cart.  Faster than `cart.items.size` because it doesn't load all of the item data from redis.
