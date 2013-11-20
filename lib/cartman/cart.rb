@@ -60,7 +60,7 @@ module Cartman
     def total
       items.collect { |item|
         (item.cost * 100).to_i
-      }.inject{|sum,cost| sum += cost} / 100.0
+      }.inject(0){|sum,cost| sum += cost} / 100.0
     end
 
     def ttl

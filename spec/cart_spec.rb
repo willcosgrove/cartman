@@ -168,6 +168,10 @@ describe Cartman do
     end
 
     describe "#total" do
+      it "should return 0 when no items are in the cart" do
+        cart.total.should eq(0)
+      end
+
       it "should total the default costs field" do
         cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
         cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, quantity: 2)
