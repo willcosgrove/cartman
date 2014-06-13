@@ -46,14 +46,20 @@ module Cartman
     end
 
     def method_missing(method, *args, &block)
-      if method.to_s =~ /=\z/
+      if method.to_s.end_with?("=")
         redis.hset _key, method[0..-2], args[0].to_s
         @data.store(method[0..-2].to_sym, args[0].to_s)
         version = touch
         @data.store(:_version, version)
-      else
+      elsif @data.keys.include?(method)
         @data.fetch(method)
+      else
+        super
       end
+    end
+
+    def respond_to_missing?(method, include_private = false)
+      method.to_s.end_with?("=") || @data.keys.include?(method) || super
     end
 
     private

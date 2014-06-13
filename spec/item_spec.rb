@@ -28,6 +28,15 @@ describe Cartman do
       it "should touch the item and cart" do
         expect{item.quantity = 4}.to change{item._version}.by(1)
       end
+
+      it "should raise NoMethodError if you use a getter that there isn't a key for" do
+        expect{ item.weight }.to raise_error(NoMethodError)
+      end
+
+      it "should respond_to the getters and setters" do
+        expect(item.respond_to?(:name)).to be true
+        expect(item.respond_to?(:name=)).to be true
+      end
     end
 
     describe "#cost" do
