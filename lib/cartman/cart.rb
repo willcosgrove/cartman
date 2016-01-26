@@ -30,7 +30,7 @@ module Cartman
 
     def items(type=nil)
       if type
-        items = line_item_ids.collect{ |item_id| get_item(item_id)}.select{ |item| item.type == type }
+        items = line_item_ids.collect{ |item_id| get_item(item_id) }.select{ |item| item.type == type if item.respond_to?(:type) }
         return ItemCollection.new(items)
       else
         return ItemCollection.new(line_item_ids.collect{ |item_id| get_item(item_id)})
