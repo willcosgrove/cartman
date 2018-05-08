@@ -1,5 +1,5 @@
 # Cartman
-[![Build Status](https://secure.travis-ci.org/UpTrendingLLC/cartman.png)](http://travis-ci.org/UpTrendingLLC/cartman)
+[![Build Status](https://secure.travis-ci.org/zedalaye/cartman.png)](http://travis-ci.org/zedalaye/cartman)
 
 ![](http://blog.brightcove.com/sites/all/uploads/eric_theodore_cartman_southpark.jpg)
 
