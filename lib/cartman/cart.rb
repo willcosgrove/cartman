@@ -4,6 +4,7 @@ module Cartman
 
     def initialize(uid)
       @uid = uid
+      @extra = nil
     end
 
     def add_item(options)
@@ -72,6 +73,7 @@ module Cartman
       keys << key
       keys << index_key
       keys << index_keys
+      keys << extra_keys
       keys.flatten!
       redis.pipelined do
         keys.each do |key|
@@ -88,6 +90,7 @@ module Cartman
         keys_to_expire << index_keys
         keys_to_expire.flatten!
       end
+      keys_to_expire += extra_keys
       redis.pipelined do
         keys_to_expire.each do |item|
           redis.expire item, Cartman.config.cart_expires_in
@@ -111,11 +114,18 @@ module Cartman
           redis.rename key, value
         end
       end
+      extra_keys.each do |extra_key|
+        redis.rename extra_key, extra_key.sub(key, key(new_id))
+      end
       @uid = new_id
     end
 
     def cache_key
       "cart/#{@uid}-#{version}"
+    end
+
+    def extra
+      @extra ||= Extra.new(@uid)
     end
 
     private
@@ -157,6 +167,10 @@ module Cartman
 
     def line_item_keys
       line_item_ids.collect{ |id| "cartman:line_item:#{id}" }
+    end
+
+    def extra_keys(id=@uid)
+      redis.keys("#{key(id)}:extra:*")
     end
 
     def get_item(id)
