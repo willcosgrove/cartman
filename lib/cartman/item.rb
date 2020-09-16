@@ -11,9 +11,9 @@ module Cartman
     end
 
     def cost
-      unit_cost = (@data.fetch(Cartman.config.unit_cost_field).to_f * 100).to_i
+      unit_cost = BigDecimal(@data.fetch(Cartman.config.unit_cost_field))
       quantity = @data.fetch(Cartman.config.quantity_field).to_i
-      (unit_cost * quantity) / 100.0
+      (unit_cost * quantity)
     end
 
     def cart
@@ -30,7 +30,7 @@ module Cartman
 
     def touch
       cart.touch
-      redis.hincrby _key, :_version, 1
+      redis.hincrby(_key, :_version, 1)
     end
 
     def _key
@@ -47,7 +47,7 @@ module Cartman
 
     def method_missing(method, *args, &block)
       if method.to_s.end_with?("=")
-        redis.hset _key, method[0..-2], args[0].to_s
+        redis.hset(_key, method[0..-2], args[0].to_s)
         @data.store(method[0..-2].to_sym, args[0].to_s)
         version = touch
         @data.store(:_version, version)

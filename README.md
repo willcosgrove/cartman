@@ -1,5 +1,5 @@
 # Cartman
-[![Build Status](https://secure.travis-ci.org/UpTrendingLLC/cartman.png)](http://travis-ci.org/UpTrendingLLC/cartman)
+[![Build Status](https://travis-ci.org/zedalaye/cartman.svg?branch=extra_keys)](https://travis-ci.org/zedalaye/cartman)
 
 ![](http://blog.brightcove.com/sites/all/uploads/eric_theodore_cartman_southpark.jpg)
 
@@ -71,6 +71,24 @@ The `Cart` object also has some handy methods that you should be aware of:
 - `destroy!` - which will delete the cart, and all the line_items out of it.
 - `reassign(id)` - this method will reassign the cart's unique identifier.  So to access this cart at a later time after reassigning, you would put `Cart.new(reassigned_id)`.  This is useful for having a cart for an unsigned in user.  You can use their session ID while they're unauthenticated, and then when they sign in, you can reassign the cart to the user's ID.  NOTE: Reassigning will overwrite any cart in it's way.
 
+The `Cart` object exposes an `extra[]` object that works like and Array and can be used to store extra data along with the `Cart` instance.
+`Cart#extra[]` can store `Numeric, Float, String, Boolean` and even `Array` or `Hash` values. Just remember that data in Redis is always stored as a String. So you have to coerce values back to original type by yourself.
+
+```ruby
+cart = Cartman::Cart.new(id)
+cart.extra['discount'] = 10
+cart.extra['discount'] == '10' # !
+cart.extra['discounted'] = true
+cart.extra['discounted'] == 'true' # !
+cart.extra['extra_array'] = [ 1, 2, 3 ]
+cart.extra['extra_array'] == [ '1', '2', '3'] # !
+cart.extra['discount'] = { discounted: true, discount: 30 }
+cart.extra['discount'] == { discounted: 'true', discount: '30' } # keys are symbolized but values are still String instances
+cart.extra[2] # raises an ArgumentError: keys must be Strings
+```
+
+The `Cart#extra[]` properties are destroyed with the Cart, they `touch` the Cart when created or changed (so `Cart#version` gets incremented) and they follow the other Cart keys if Cart's unique identifier is changed using `Cart#reassign(new_id)`
+
 Lets walk through an example implementation with a Rails app that has a User model and a Product model.
 
 ```ruby
@@ -103,6 +121,34 @@ end
 %ul
   - @cart.items.each do |item|
     %li #{item.name} - #{item.cost}
+```
+
+## Sample usage of Cart#extra[]
+
+```ruby
+# app/controllers/products_controller.rb
+class ProductsController < ApplicationController
+  #...
+  # /products/:id/add_to_cart
+  def add_to_cart
+    @product = Product.find(params[:id])
+    current_user.cart.add_item(id: @product.id, name: @product.name, unit_cost: @product.cost, cost: @product.cost * params[:quantity], quantity: params[:quantity])
+  end
+  #...
+ 
+  def store_discount_code
+    current_user.cart.extra['discount_code'] = params[:discount_code] 
+  end
+end
+```
+
+```haml
+-# app/view/cart/show.html.haml
+%h1 Cart - Total: #{@cart.total}
+%ul
+  - @cart.items.each do |item|
+    %li #{item.name} - #{item.cost}
+  %li Discount Code: #{@cart.extra['discount_code']}  
 ```
 
 ## Contributing
