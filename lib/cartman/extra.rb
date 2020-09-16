@@ -19,9 +19,9 @@ module Cartman
 
       case key_type = redis.type(key).to_sym
       when :string then
-        redis.get key
+        redis.get(key)
       when :set then
-        redis.smembers key
+        redis.smembers(key)
       when :hash then
         redis.hgetall(key).inject({}) { |hash, (k, v)| hash[k.to_sym] = v; hash }
       when :none then
@@ -35,14 +35,14 @@ module Cartman
       raise ArgumentError, "extra[] key name must be a String" unless name.is_a?(String)
 
       key = extra_key(name)
-      redis.del(key) if redis.exists(key)
+      redis.del(key) if redis.exists?(key)
       case value
       when Hash then
-        redis.mapped_hmset key, value
+        redis.mapped_hmset(key, value)
       when Array then
-        redis.sadd key, value
+        redis.sadd(key, value)
       else
-        redis.set key, value unless value.nil?
+        redis.set(key, value) unless value.nil?
       end
       cart.touch
       value

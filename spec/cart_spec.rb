@@ -17,11 +17,11 @@ describe Cartman do
 
     describe "#add_item" do
       before(:each) do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeaux", unit_cost: 92.12, quantity: 2)
       end
 
       it "creates a line item key" do
-        expect(Cartman.config.redis.exists("cartman:line_item:1")).to be true
+        expect(Cartman.config.redis.exists?("cartman:line_item:1")).to be true
       end
 
       it "adds that line item key's id to the cart set" do
@@ -34,7 +34,7 @@ describe Cartman do
       end
 
       it "should add an index key to be able to look up by type and ID" do
-        expect(Cartman.config.redis.exists("cartman:cart:1:index")).to be true
+        expect(Cartman.config.redis.exists?("cartman:cart:1:index")).to be true
         expect(Cartman.config.redis.sismember("cartman:cart:1:index", "Bottle:17")).to be true
       end
 
@@ -52,27 +52,27 @@ describe Cartman do
 
     describe "#remove_item" do
       it "should remove the id from the set, and delete the line_item key" do
-        item = cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
+        item = cart.add_item(id: 17, type: "Bottle", name: "Bordeaux", unit_cost: 92.12, quantity: 2)
         item_id = item._id
         cart.remove_item(item)
         expect(Cartman.config.redis.sismember(cart.send(:key), item_id)).to be false
-        expect(Cartman.config.redis.exists("cartman:line_item:#{item_id}")).to be false
+        expect(Cartman.config.redis.exists?("cartman:line_item:#{item_id}")).to be false
       end
 
       it "should not delete the indecies for other items" do
-        item = cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
-        item2 = cart.add_item(id: 18, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
-        expect(Cartman.config.redis.exists("cartman:cart:1:index:Bottle:17")).to be true
-        expect(Cartman.config.redis.exists("cartman:cart:1:index:Bottle:18")).to be true
+        item = cart.add_item(id: 17, type: "Bottle", name: "Bordeaux", unit_cost: 92.12, quantity: 2)
+        item2 = cart.add_item(id: 18, type: "Bottle", name: "Bordeaux", unit_cost: 92.12, quantity: 2)
+        expect(Cartman.config.redis.exists?("cartman:cart:1:index:Bottle:17")).to be true
+        expect(Cartman.config.redis.exists?("cartman:cart:1:index:Bottle:18")).to be true
         cart.remove_item(item)
-        expect(Cartman.config.redis.exists("cartman:cart:1:index:Bottle:17")).to be false
-        expect(Cartman.config.redis.exists("cartman:cart:1:index:Bottle:18")).to be true
+        expect(Cartman.config.redis.exists?("cartman:cart:1:index:Bottle:17")).to be false
+        expect(Cartman.config.redis.exists?("cartman:cart:1:index:Bottle:18")).to be true
       end
     end
 
     describe "#items" do
       before(:each) do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeaux", unit_cost: 92.12, quantity: 2)
         cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, quantity: 2)
         cart.add_item(id: 35, type: "GiftCard", name: "Gift Card", unit_cost: 100.00, quantity: 1)
       end
@@ -81,7 +81,7 @@ describe Cartman do
         expect(cart.items.class).to be(Cartman::ItemCollection)
         expect(cart.items.first.class).to be(Cartman::Item)
         expect(cart.items.first.id).to eq("17")
-        expect(cart.items.first.name).to eq("Bordeux")
+        expect(cart.items.first.name).to eq("Bordeaux")
       end
 
       it "should return all items in cart if no filter is given" do
@@ -101,7 +101,7 @@ describe Cartman do
       end
 
       before(:each) do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeaux", unit_cost: 92.12, quantity: 2)
         cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, quantity: 2)
       end
 
@@ -124,13 +124,13 @@ describe Cartman do
     describe "#find(item)" do
 
       before(:each) do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeaux", unit_cost: 92.12, quantity: 2)
         cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, quantity: 2)
       end
 
       it "should take some object, and return the Item that corresponds to it" do
         expect(cart.find(Bottle.new(17)).quantity).to eq("2")
-        expect(cart.find(Bottle.new(17)).name).to eq("Bordeux")
+        expect(cart.find(Bottle.new(17)).name).to eq("Bordeaux")
         expect(cart.find(Bottle.new(34)).name).to eq("Cabernet")
       end
 
@@ -141,7 +141,7 @@ describe Cartman do
 
     describe "#count" do
       it "should return the number of items in the cart" do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeaux", unit_cost: 92.12, quantity: 2)
         cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, quantity: 2)
         expect(cart.count).to eq(2)
       end
@@ -149,7 +149,7 @@ describe Cartman do
 
     describe "#quantity" do
       it "should return the sum of the default quantity field" do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeaux", unit_cost: 92.12, quantity: 2)
         cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, quantity: 2)
         expect(cart.quantity).to eq(4)
       end
@@ -158,7 +158,7 @@ describe Cartman do
         Cartman.config do |c|
           c.quantity_field = :qty
         end
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, qty: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeaux", unit_cost: 92.12, qty: 2)
         cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, qty: 2)
         expect(cart.quantity).to eq(4)
         Cartman.config do |c|
@@ -173,7 +173,7 @@ describe Cartman do
       end
 
       it "should total the default costs field" do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeaux", unit_cost: 92.12, quantity: 2)
         cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, quantity: 2)
         expect(cart.total).to eq(368.48)
       end
@@ -182,7 +182,7 @@ describe Cartman do
         Cartman.config do |c|
           c.unit_cost_field = :unit_cost_in_cents
         end
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost_in_cents: 9212, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeaux", unit_cost_in_cents: 9212, quantity: 2)
         cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost_in_cents: 9212, quantity: 2)
         expect(cart.total).to eq(36848)
         Cartman.config do |c|
@@ -193,20 +193,20 @@ describe Cartman do
 
     describe "#destroy" do
       it "should delete the line_item keys, the index key, and the cart key" do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeaux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
         cart.add_item(id: 34, type: "Bottle", name: "Cabernet", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
         cart.destroy!
-        expect(Cartman.config.redis.exists("cartman:cart:1")).to be false
-        expect(Cartman.config.redis.exists("cartman:line_item:1")).to be false
-        expect(Cartman.config.redis.exists("cartman:line_item:2")).to be false
-        expect(Cartman.config.redis.exists("cartman:cart:1:index")).to be false
-        expect(Cartman.config.redis.exists("cartman:cart:1:index:Bottle:17")).to be false
+        expect(Cartman.config.redis.exists?("cartman:cart:1")).to be false
+        expect(Cartman.config.redis.exists?("cartman:line_item:1")).to be false
+        expect(Cartman.config.redis.exists?("cartman:line_item:2")).to be false
+        expect(Cartman.config.redis.exists?("cartman:cart:1:index")).to be false
+        expect(Cartman.config.redis.exists?("cartman:cart:1:index:Bottle:17")).to be false
       end
     end
 
     describe "#touch" do
       it "should reset the TTL" do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeaux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
         cart.touch
         expect(cart.ttl).to eq(Cartman.config.cart_expires_in)
         expect(Cartman.config.redis.ttl("cartman:cart:1:index")).to eq(Cartman.config.cart_expires_in)
@@ -214,7 +214,7 @@ describe Cartman do
       end
 
       it "should record that the cart was updated" do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeaux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
         cart.touch
         expect(cart.version).to eq(2)
       end
@@ -227,26 +227,26 @@ describe Cartman do
       end
 
       it "should rename the key, and index_key if it exists" do
-        cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 1)
+        cart.add_item(id: 17, type: "Bottle", name: "Bordeaux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 1)
         cart.add_item(id: 18, type: "Bottle", name: "Merlot", unit_cost: 92.12, cost_in_cents: 18424, quantity: 3)
         expect(cart.quantity).to be(4)
         cart.reassign(2)
         expect(cart.items.size).to be(2)
         expect(Cartman::Cart.new(2).quantity).to be(4)
-        expect(Cartman.config.redis.exists("cartman:cart:1")).to be false
-        expect(Cartman.config.redis.exists("cartman:cart:1:index")).to be false
-        expect(Cartman.config.redis.exists("cartman:cart:1:index:Bottle:17")).to be false
-        expect(Cartman.config.redis.exists("cartman:cart:2")).to be true
-        expect(Cartman.config.redis.exists("cartman:cart:2:index")).to be true
-        expect(Cartman.config.redis.exists("cartman:cart:2:index:Bottle:17")).to be true
+        expect(Cartman.config.redis.exists?("cartman:cart:1")).to be false
+        expect(Cartman.config.redis.exists?("cartman:cart:1:index")).to be false
+        expect(Cartman.config.redis.exists?("cartman:cart:1:index:Bottle:17")).to be false
+        expect(Cartman.config.redis.exists?("cartman:cart:2")).to be true
+        expect(Cartman.config.redis.exists?("cartman:cart:2:index")).to be true
+        expect(Cartman.config.redis.exists?("cartman:cart:2:index:Bottle:17")).to be true
         expect(cart.send(:key)[-1]).to eq("2")
-        cart.add_item(id: 19, type: "Bottle", name: "Bordeux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
+        cart.add_item(id: 19, type: "Bottle", name: "Bordeaux", unit_cost: 92.12, cost_in_cents: 18424, quantity: 2)
         cart.reassign(1)
         expect(cart.items.size).to be(3)
-        expect(Cartman.config.redis.exists("cartman:cart:2")).to be false
-        expect(Cartman.config.redis.exists("cartman:cart:2:index")).to be false
-        expect(Cartman.config.redis.exists("cartman:cart:1")).to be true
-        expect(Cartman.config.redis.exists("cartman:cart:1:index")).to be true
+        expect(Cartman.config.redis.exists?("cartman:cart:2")).to be false
+        expect(Cartman.config.redis.exists?("cartman:cart:2:index")).to be false
+        expect(Cartman.config.redis.exists?("cartman:cart:1")).to be true
+        expect(Cartman.config.redis.exists?("cartman:cart:1:index")).to be true
         expect(cart.send(:key)[-1]).to eq("1")
       end
     end

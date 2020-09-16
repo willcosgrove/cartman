@@ -8,7 +8,7 @@ Gem::Specification.new do |gem|
   gem.version       = Cartman::VERSION
   gem.authors       = ["Will Cosgrove"]
   gem.email         = ["will@willcosgrove.com"]
-  gem.description   = %q{Cartman is a frameworke agnostic, redis-backed, shopping cart system}
+  gem.description   = %q{Cartman is a framework agnostic, redis-backed, shopping cart system}
   gem.summary       = %q{Doing shopping carts like a boss since 2012}
   gem.homepage      = "http://github.com/willcosgrove/cartman"
 

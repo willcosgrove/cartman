@@ -30,7 +30,7 @@ module Cartman
 
     def touch
       cart.touch
-      redis.hincrby _key, :_version, 1
+      redis.hincrby(_key, :_version, 1)
     end
 
     def _key
@@ -47,7 +47,7 @@ module Cartman
 
     def method_missing(method, *args, &block)
       if method.to_s.end_with?("=")
-        redis.hset _key, method[0..-2], args[0].to_s
+        redis.hset(_key, method[0..-2], args[0].to_s)
         @data.store(method[0..-2].to_sym, args[0].to_s)
         version = touch
         @data.store(:_version, version)

@@ -23,7 +23,7 @@ describe Cartman do
         expect(cart.extra['discount']).to eq('10')
 
         # Make sure key really exists in Redis
-        expect(Cartman.config.redis.exists("cartman:cart:1:extra:discount")).to be true
+        expect(Cartman.config.redis.exists?("cartman:cart:1:extra:discount")).to be true
         expect(Cartman.config.redis.get("cartman:cart:1:extra:discount")).to eq('10')
       end
 
@@ -61,7 +61,7 @@ describe Cartman do
       it "should remove extra keys when assigned nil" do
         cart.extra['discount'] = 10
         cart.extra['discount'] = nil
-        expect(Cartman.config.redis.exists("cartman:cart:1:extra:discount")).to be false
+        expect(Cartman.config.redis.exists?("cartman:cart:1:extra:discount")).to be false
       end
 
       it "should raise an error if extra[] key is anything but a String" do
@@ -74,8 +74,8 @@ describe Cartman do
       it "should delete the extra keys" do
         cart.extra['self_picking'] = true
         cart.destroy!
-        expect(Cartman.config.redis.exists("cartman:cart:1")).to be false
-        expect(Cartman.config.redis.exists("cartman:cart:1:extra:self_picking")).to be false
+        expect(Cartman.config.redis.exists?("cartman:cart:1")).to be false
+        expect(Cartman.config.redis.exists?("cartman:cart:1:extra:self_picking")).to be false
       end
     end
 
@@ -99,16 +99,16 @@ describe Cartman do
         cart.extra['discount'] = { applied: true, code: 'Z42XB12' }
 
         cart.reassign(2)
-        expect(Cartman.config.redis.exists("cartman:cart:1:extra:self_picking")).to be false
-        expect(Cartman.config.redis.exists("cartman:cart:1:extra:discount")).to be false
-        expect(Cartman.config.redis.exists("cartman:cart:2:extra:self_picking")).to be true
-        expect(Cartman.config.redis.exists("cartman:cart:2:extra:discount")).to be true
+        expect(Cartman.config.redis.exists?("cartman:cart:1:extra:self_picking")).to be false
+        expect(Cartman.config.redis.exists?("cartman:cart:1:extra:discount")).to be false
+        expect(Cartman.config.redis.exists?("cartman:cart:2:extra:self_picking")).to be true
+        expect(Cartman.config.redis.exists?("cartman:cart:2:extra:discount")).to be true
 
         cart.reassign(1)
-        expect(Cartman.config.redis.exists("cartman:cart:1:extra:self_picking")).to be true
-        expect(Cartman.config.redis.exists("cartman:cart:1:extra:discount")).to be true
-        expect(Cartman.config.redis.exists("cartman:cart:2:extra:self_picking")).to be false
-        expect(Cartman.config.redis.exists("cartman:cart:2:extra:discount")).to be false
+        expect(Cartman.config.redis.exists?("cartman:cart:1:extra:self_picking")).to be true
+        expect(Cartman.config.redis.exists?("cartman:cart:1:extra:discount")).to be true
+        expect(Cartman.config.redis.exists?("cartman:cart:2:extra:self_picking")).to be false
+        expect(Cartman.config.redis.exists?("cartman:cart:2:extra:discount")).to be false
       end
     end
   end
