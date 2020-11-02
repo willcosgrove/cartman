@@ -1,66 +1,79 @@
+require 'digest/sha1'
+require 'json'
+
 module Cartman
   class Cart
-    CART_LINE_ITEM_ID_KEY = "cartman:line_item:id"
+    ITEM_DATA_DEFAULT_PROC = -> (hash, key) { hash[key] = Hash.new }
 
-    def initialize(uid)
-      @uid = uid
+    attr_reader :id, :loaded, :item_data
+
+    def initialize(id)
+      @id = id
+      @loaded = false
+      @item_data = nil
     end
 
-    def add_item(options)
-      raise "Must specify both :id and :type" unless options.has_key?(:id) && options.has_key?(:type)
-      line_item_id = redis.incr CART_LINE_ITEM_ID_KEY
-      redis.pipelined do
-        redis.mapped_hmset("cartman:line_item:#{line_item_id}", options)
-        redis.hincrby("cartman:line_item:#{line_item_id}", :_version, 1)
-        redis.sadd key, line_item_id
-        redis.sadd index_key, "#{options[:type]}:#{options[:id]}"
-        redis.set index_key_for(options), line_item_id
-      end
-      touch
-      get_item(line_item_id)
+    def add_item(id:, type:, **item_data)
+      @item_data[type][id] =
+        { id: id, type: type, **item_data }.transform_keys(&:to_s)
     end
 
     def remove_item(item)
-      redis.del "cartman:line_item:#{item._id}"
-      redis.srem key, item._id
-      redis.srem index_key, "#{item.type}:#{item.id}"
-      redis.del index_key_for(item)
-      touch
+      @item_data[item.type].delete(item.id)
     end
 
     def items(type=nil)
+      self.load unless @loaded
+
       if type
-        items = line_item_ids.collect{ |item_id| get_item(item_id) }.select{ |item| item.type == type if item.respond_to?(:type) }
-        return ItemCollection.new(items)
+        ItemCollection.new(
+          @item_data[type].values.map { |item| Item.new(self, item) }
+        )
       else
-        return ItemCollection.new(line_item_ids.collect{ |item_id| get_item(item_id)})
+        ItemCollection.new(
+          @item_data.flat_map do |type, collection|
+            collection.values.map { |item| Item.new(self, item) }
+          end
+        )
       end
     end
 
     def contains?(object)
-      redis.sismember index_key, "#{object.class}:#{object.id}"
+      self.load unless @loaded
+
+      @item_data.dig(object.class.to_s, object.id.to_s).present?
     end
 
     def find(object)
-      if contains?(object)
-        get_item(redis.get(index_key_for(object)).to_i)
+      self.load unless @loaded
+
+      item_data = @item_data.dig(object.class.to_s, object.id.to_s)
+
+      if item_data.present?
+        Item.new(self, item_data)
       end
     end
 
     def count
-      redis.scard key
+      self.load unless @loaded
+
+      @item_data.sum { |item_type, items| items.size }
     end
 
     def quantity
-      line_item_keys.collect { |item_key|
-        redis.hget item_key, Cartman.config.quantity_field
-      }.inject(0){|sum,quantity| sum += quantity.to_i}
+      self.load unless @loaded
+
+      @item_data.sum do |item_type, items|
+        items.sum { |id, data| data[Cartman.config.quantity_field.to_s].to_i }
+      end
     end
 
     def total
-      items.collect { |item|
-        (item.cost * 100).to_i
-      }.inject(0){|sum,cost| sum += cost} / 100.0
+      self.load unless @loaded
+
+      @item_data.sum { |item_type, items|
+        items.sum { |id, data| (Item.new(self, data).cost * 100).to_i }
+      } / 100.0
     end
 
     def ttl
@@ -68,102 +81,86 @@ module Cartman
     end
 
     def destroy!
-      keys = line_item_keys
-      keys << key
-      keys << index_key
-      keys << index_keys
-      keys.flatten!
-      redis.pipelined do
-        keys.each do |key|
-          redis.del key
-        end
-      end
+      redis.unlink key
     end
 
     def touch
-      keys_to_expire = line_item_keys
-      keys_to_expire << key
-      if redis.exists index_key
-        keys_to_expire << index_key
-        keys_to_expire << index_keys
-        keys_to_expire.flatten!
-      end
-      redis.pipelined do
-        keys_to_expire.each do |item|
-          redis.expire item, Cartman.config.cart_expires_in
-        end
-      end
-      redis.hincrby self.class.versions_key, version_key, 1
-    end
-
-    def version
-      redis.hget(self.class.versions_key, version_key).to_i
+      redis.expire key, Cartman.config.cart_expires_in
     end
 
     def reassign(new_id)
-      if redis.exists key
-        new_index_keys = items.collect { |item|
-          index_key_for(item, new_id)
-        }
-        redis.rename key, key(new_id)
-        redis.rename index_key, index_key(new_id)
-        index_keys.zip(new_index_keys).each do |key, value|
-          redis.rename key, value
-        end
-      end
-      @uid = new_id
+      redis.rename key, key(new_id)
+      @id = new_id
     end
 
-    def cache_key
-      "cart/#{@uid}-#{version}"
+    def load
+      data = redis.get(key)
+      data = data.present? ? JSON.parse(data) : {}
+      @item_data = data.fetch("items", {})
+      @item_data.default_proc = ITEM_DATA_DEFAULT_PROC
+      @loaded = true
+    rescue Redis::CommandError => e
+      raise unless e.message.match? "WRONGTYPE"
+      convert
+      retry
+    end
+    alias_method :reload, :load
+
+    def save
+      self.load unless @loaded
+
+      redis.set(key, to_json)
+    end
+
+    def as_json(_options={})
+      { id: @id, items: @item_data }
     end
 
     private
 
-    def key(id=@uid)
+    def key(id=@id)
       "cartman:cart:#{id}"
     end
 
-    def index_key(id=@uid)
-      key(id) + ":index"
-    end
+    CONVERSION_SCRIPT = <<~LUA.freeze
+      local line_item_keys = redis.call("smembers", KEYS[1])
 
-    def version_key(id=@uid)
-      id
-    end
-
-    def self.versions_key
-      "cartman:cart:versions"
-    end
-
-    def index_keys(id=@uid)
-      redis.keys "#{index_key(id)}:*"
-    end
-
-    def index_key_for(object, id=@uid)
-      case object
-      when Hash
-        index_key(id) + ":#{object[:type]}:#{object[:id]}"
-      when Item
-        index_key(id) + ":#{object.type}:#{object.id}"
-      else
-        index_key(id) + ":#{object.class}:#{object.id}"
+      for k, v in pairs(line_item_keys) do
+        line_item_keys[k] = "cartman:line_item:"..v
       end
-    end
 
-    def line_item_ids
-      redis.smembers key
-    end
+      local new_cart = { id = ARGV[1], items = {} }
 
-    def line_item_keys
-      line_item_ids.collect{ |id| "cartman:line_item:#{id}" }
-    end
+      redis.setresp(3)
 
-    def get_item(id)
-      Item.new(id, @uid, redis.hgetall("cartman:line_item:#{id}").inject({}){|hash,(k,v)| hash[k.to_sym] = v; hash})
-    end
+      for _, line_item_key in ipairs(line_item_keys) do
+        local line_item = redis.call("hgetall", line_item_key).map
+        new_cart.items[line_item.type] = new_cart.items[line_item.type] or {}
+        new_cart.items[line_item.type][line_item.id] = line_item
+      end
 
-    private
+      local keys_to_delete = { KEYS[1] }
+
+      for k,v in pairs(redis.call("keys", KEYS[1]..":*")) do
+        table.insert(keys_to_delete, v)
+      end
+
+      for k,v in pairs(line_item_keys) do
+        table.insert(keys_to_delete, v)
+      end
+
+      redis.call("del", unpack(keys_to_delete))
+
+      return redis.call("setex", KEYS[1], ARGV[2], cjson.encode(new_cart))
+    LUA
+
+    CONVERSION_SCRIPT_SHA = Digest::SHA1.hexdigest(CONVERSION_SCRIPT).freeze
+
+    def convert
+      redis.evalsha CONVERSION_SCRIPT_SHA, keys: [key], argv: [id, Cartman.config.cart_expires_in]
+    rescue Redis::CommandError
+      redis.eval CONVERSION_SCRIPT, keys: [key], argv: [id, Cartman.config.cart_expires_in]
+    end
 
     def redis
       Cartman.config.redis

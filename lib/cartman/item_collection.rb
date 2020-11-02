@@ -9,11 +9,10 @@ module Cartman
       super(@results)
     end
 
-    def each_with_object
+    def each_with_model
       @results.each do |result|
-        yield result, eval(result.type).send(:find, result.id)
+        yield result, result.model
       end
     end
-
   end
 end
