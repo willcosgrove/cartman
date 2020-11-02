@@ -14,8 +14,8 @@ module Cartman
     def_delegator :cart, :save
 
     def cost
-      unit_cost = (@data[Cartman.config.unit_cost_field].to_f * 100).to_i
-      quantity = @data[Cartman.config.quantity_field].to_i
+      unit_cost = (@data[Cartman.config.unit_cost_field.to_s].to_f * 100).to_i
+      quantity = @data[Cartman.config.quantity_field.to_s].to_i
       (unit_cost * quantity) / 100.0
     end
 

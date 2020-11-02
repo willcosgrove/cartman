@@ -71,8 +71,8 @@ module Cartman
     def total
       self.load unless @loaded
 
-      @item_data.sum { |item_type, items|
-        items.sum { |id, data| (Item.new(self, data).cost * 100).to_i }
+      @item_data.sum { |_item_type, items|
+        items.sum { |_id, data| (Item.new(self, data).cost * 100).to_i }
       } / 100.0
     end
 
