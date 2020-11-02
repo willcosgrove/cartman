@@ -131,10 +131,14 @@ module Cartman
 
       local new_cart = { id = ARGV[1], items = {} }
 
-      redis.setresp(3)
-
       for _, line_item_key in ipairs(line_item_keys) do
-        local line_item = redis.call("hgetall", line_item_key).map
+        local line_item_data = redis.call("hgetall", line_item_key)
+        local line_item = {}
+
+        for i=1, #line_item_data, 2 do
+          line_item[line_item_data[i]] = line_item_data[i+1]
+        end
+
         new_cart.items[line_item.type] = new_cart.items[line_item.type] or {}
         new_cart.items[line_item.type][line_item.id] = line_item
       end
