@@ -10,8 +10,12 @@ module Cartman
     end
 
     def each_with_model
-      @results.each do |result|
-        yield result, result.model
+      if block_given?
+        @results.each do |result|
+          yield result, result.model
+        end
+      else
+        enum_for(__method__) { @results.size }
       end
     end
   end
