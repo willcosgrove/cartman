@@ -14,8 +14,15 @@ module Cartman
     end
 
     def add_item(id:, type:, **item_data)
-      @item_data[type][id] =
+      self.load unless @loaded
+
+      all_item_data =
         { id: id, type: type, **item_data }.transform_keys(&:to_s)
+
+      @item_data[type][id] = all_item_data
+      save
+
+      Item.new(self, all_item_data)
     end
 
     def remove_item(item)
