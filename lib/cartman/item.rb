@@ -22,6 +22,11 @@ module Cartman
     def destroy
       cart.remove_item(self)
       cart.save
+      @cart = nil
+    end
+
+    def destroyed?
+      @cart.nil?
     end
 
     def key
