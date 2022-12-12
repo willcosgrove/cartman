@@ -6,9 +6,11 @@ module Cartman
 
     attr_reader :cart
 
+    UNSET = Object.new
     def initialize(cart, data)
       @cart = cart
       @data = data
+      @model = UNSET
     end
 
     def_delegator :cart, :save
@@ -43,7 +45,9 @@ module Cartman
     end
 
     def model
-      Object.const_get(type).find(id)
+      return @model unless @model == UNSET
+
+      @model = Object.const_get(type).find(id)
     end
 
     def as_json(_options={})
