@@ -26,6 +26,8 @@ module Cartman
     end
 
     def remove_item(item)
+      self.load unless @loaded
+
       @item_data[item.type].delete(item.id)
     end
 
