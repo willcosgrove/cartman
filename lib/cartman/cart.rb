@@ -34,17 +34,14 @@ module Cartman
     def items(type=nil)
       self.load unless @loaded
 
-      if type
+      @item_collection ||=
         ItemCollection.new(
-          @item_data[type].values.map { |item| Item.new(self, item) }
-        )
-      else
-        ItemCollection.new(
-          @item_data.flat_map do |type, collection|
+          @item_data.flat_map do |_type, collection|
             collection.values.map { |item| Item.new(self, item) }
           end
         )
-      end
+
+      type ? @item_collection.only(type) : @item_collection
     end
 
     def contains?(object)

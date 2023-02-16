@@ -36,6 +36,10 @@ module Cartman
     end
     alias_method :_id, :key
 
+    def to_param
+      key
+    end
+
     def id
       @data.fetch("id")
     end
@@ -45,9 +49,17 @@ module Cartman
     end
 
     def model
-      return @model unless @model == UNSET
+      return @model if model_set?
 
       @model = Object.const_get(type).find(id)
+    end
+
+    def set_model(model)
+      @model = model
+    end
+
+    def model_set?
+      @model != UNSET
     end
 
     def as_json(_options={})

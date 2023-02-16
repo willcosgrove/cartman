@@ -9,14 +9,30 @@ module Cartman
       super(@results)
     end
 
-    def each_with_model
+    def each_with_model(includes: [])
       if block_given?
+        model_cache = Hash.new { |h, key| h[key] = {} }
+        id_collection = Hash.new { |h, key| h[key] = [] }
+
+        @results.each do |item|
+          next if item.model_set?
+          id_collection[item.type] << item.id
+        end
+
+        id_collection.each do |model_class_name, ids|
+          model_cache[model_class_name] = Object.const_get(model_class_name).includes(includes).find(ids).index_by(&:id)
+        end
+
         @results.each do |result|
+          model = model_cache[result.type][result.id]
+          result.set_model(model) if model
           yield result, result.model
         end
       else
-        enum_for(__method__) { @results.size }
+        enum_for(__method__, includes: includes) { @results.size }
       end
     end
+
+    def only(type) = self.class.new(select { _1.type == type })
   end
 end
