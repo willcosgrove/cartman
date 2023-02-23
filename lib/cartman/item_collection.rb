@@ -33,6 +33,7 @@ module Cartman
       end
     end
 
-    def only(type) = self.class.new(select { _1.type == type })
+    def only(*types)   = self.class.new(select { types.include?(_1.type) })
+    def except(*types) = self.class.new(reject { types.include?(_1.type) })
   end
 end
