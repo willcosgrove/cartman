@@ -115,7 +115,11 @@ module Cartman
     def save
       self.load unless @loaded
 
-      redis.set(key, to_json)
+      if Cartman.config.cart_expires_in
+        redis.setex(key, Cartman.config.cart_expires_in, to_json)
+      else
+        redis.set(key, to_json)
+      end
     end
 
     def as_json(_options={})
