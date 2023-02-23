@@ -19,10 +19,17 @@ module Cartman
       all_item_data =
         { id: id, type: type, **item_data }.transform_keys(&:to_s)
 
-      @item_data[type][id] = all_item_data
+      @item_data[type][id] ||= {}
+      @item_data[type][id].merge!(all_item_data) do |key, old_value, new_value|
+        case key
+        when Cartman.config.quantity_field.to_s then old_value.to_i + new_value.to_i
+        else
+          new_value
+        end
+      end
       save
 
-      Item.new(self, all_item_data)
+      Item.new(self, @item_data[type][id])
     end
 
     def remove_item(item)
