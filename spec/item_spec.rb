@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Cartman do
   describe Cartman::Item do
     let(:cart) { Cartman::Cart.new(1) }
-    let(:item) { cart.add_item(id: 17, type: "Bottle", name: "Bordeux", unit_cost: 92.12, quantity: 2) }
+    let(:item) { cart.add_item(id: 17, type: "Bottle", name: "Bordeaux", unit_cost: 92.12, quantity: 2) }
 
     describe "data getters and setters" do
       it "should let me get data stored for the item" do
@@ -52,7 +52,7 @@ describe Cartman do
         item_id = item._id
         item.destroy
         expect(Cartman.config.redis.sismember(cart.send(:key), item_id)).to be false
-        expect(Cartman.config.redis.exists("cartman:line_item:#{item_id}")).to be false
+        expect(Cartman.config.redis.exists?("cartman:line_item:#{item_id}")).to be false
       end
     end
 

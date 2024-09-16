@@ -1,8 +1,10 @@
+require "bigdecimal"
 require "cartman/version"
 require "cartman/configuration"
 require "cartman/cart"
 require "cartman/item"
 require "cartman/item_collection"
+require "cartman/extra"
 
 module Cartman
   def self.config
