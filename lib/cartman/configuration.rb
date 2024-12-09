@@ -12,7 +12,10 @@ module Cartman
     end
 
     def redis
-      @redis ||= Redis.new
+      @redis ||= begin
+        Redis.silence_deprecations
+        Redis.new
+      end
     end
   end
 end
