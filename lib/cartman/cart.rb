@@ -111,6 +111,7 @@ module Cartman
       data = data.present? ? JSON.parse(data) : {}
       @item_data = data.fetch("items", {})
       @item_data.default_proc = ITEM_DATA_DEFAULT_PROC
+      @item_collection = nil
       @loaded = true
     rescue Redis::CommandError => e
       raise unless e.message.match? "WRONGTYPE"
