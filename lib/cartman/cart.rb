@@ -36,6 +36,7 @@ module Cartman
       self.load unless @loaded
 
       @item_data[item.type].delete(item.id)
+      @item_collection.delete(item)
     end
 
     def items(type=nil)
